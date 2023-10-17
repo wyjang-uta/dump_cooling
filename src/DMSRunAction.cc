@@ -56,18 +56,23 @@ DMSRunAction::DMSRunAction()
   analysisManager->SetVerboseLevel(1);
 
   // Create an Ntuple
-  analysisManager->CreateNtuple("DMSNeutronEmission", "DMS Neutron Emission Simulation");
-  analysisManager->CreateNtupleDColumn("kineticEnergy");
-  analysisManager->CreateNtupleDColumn("totalEnergy");
-  analysisManager->CreateNtupleDColumn("hit_x");
-  analysisManager->CreateNtupleDColumn("hit_y");
-  analysisManager->CreateNtupleDColumn("hit_z");
-  analysisManager->CreateNtupleDColumn("theta");
+  analysisManager->CreateNtuple("DMSDumpSim", "DMS Dump Simulation");
+  analysisManager->CreateNtupleSColumn("procName");
+  analysisManager->CreateNtupleSColumn("particleName");
+  analysisManager->CreateNtupleSColumn("motherName");
+  analysisManager->CreateNtupleSColumn("volumeName");
+  analysisManager->CreateNtupleDColumn("kinE");
+  analysisManager->CreateNtupleDColumn("x");
+  analysisManager->CreateNtupleDColumn("y");
+  analysisManager->CreateNtupleDColumn("z");
+  analysisManager->CreateNtupleDColumn("global_t");
+  analysisManager->CreateNtupleDColumn("local_t");
   analysisManager->CreateNtupleDColumn("px");
   analysisManager->CreateNtupleDColumn("py");
   analysisManager->CreateNtupleDColumn("pz");
-  analysisManager->CreateNtupleDColumn("globalTime");
-  analysisManager->CreateNtupleDColumn("localTime");
+  analysisManager->CreateNtupleDColumn("pdir_x");
+  analysisManager->CreateNtupleDColumn("pdir_y");
+  analysisManager->CreateNtupleDColumn("pdir_z");
   analysisManager->FinishNtuple();
 }
 

@@ -54,52 +54,40 @@ DMSSteppingAction::~DMSSteppingAction()
 void DMSSteppingAction::UserSteppingAction(const G4Step* step)
 {
   auto analysisManager = G4AnalysisManager::Instance();
-  G4StepPoint* presp = step->GetPreStepPoint();
-  G4StepPoint* postsp = step->GetPostStepPoint();
 
-  // Record all neutrons with prestep volume name == "Dump" but poststep volume name != "Dump".
-  // This means that particle is exiting the dump volume.
-  G4String presp_volume;
-  G4String postsp_volume;
-  if( presp == nullptr ) return;
-  if( postsp == nullptr ) return;
-  if( step->GetTrack()->GetParticleDefinition()->GetPDGEncoding() != 2112 ) return; // only neutrons
-  if( postsp->GetTouchableHandle()->GetVolume() == nullptr ) return;
-  if( presp->GetTouchableHandle()->GetVolume() == nullptr ) return;
-  presp_volume = presp->GetTouchableHandle()->GetVolume()->GetLogicalVolume()->GetName();
-  postsp_volume = postsp->GetTouchableHandle()->GetVolume()->GetLogicalVolume()->GetName();
-  // select events
-  if( !(presp_volume == "Dump" && postsp_volume != "Dump") ) return;
+  // Record all photons and neutrons kinematic information.
+  const std::vector<const G4Track*>* secondaries = step->GetSecondaryInCurrentStep();
 
-  G4double KE=(G4double)postsp->GetKineticEnergy()/CLHEP::MeV;    // Kinetic energy
-  G4double TE=(G4double)postsp->GetTotalEnergy()/CLHEP::MeV;      // Total energy
-  G4double vx=(G4double)postsp->GetPosition().getX()/CLHEP::cm;   // Position neutron exits the dump.
-  G4double vy=(G4double)postsp->GetPosition().getY()/CLHEP::cm;
-  G4double vz=(G4double)postsp->GetPosition().getZ()/CLHEP::cm;
-  G4double px=(G4double)postsp->GetMomentum().getX()/CLHEP::MeV;  // Momentum of the neutron.
-  G4double py=(G4double)postsp->GetMomentum().getY()/CLHEP::MeV;
-  G4double pz=(G4double)postsp->GetMomentum().getZ()/CLHEP::MeV;
-  G4double theta=acos(pz/sqrt(px*px+py*py+pz*pz))*180./M_PI;      // Direction of the neutron with respect to the z-axis (beam direction).
-  G4double gt=(G4double)postsp->GetGlobalTime()/CLHEP::ns;
-  G4double lt=(G4double)postsp->GetLocalTime()/CLHEP::ns;
+  for( size_t lp = 0; lp < (*secondaries).size(); ++lp )
+  {
+    // Process Name
+    analysisManager->FillNtupleSColumn(0, (*secondaries)[lp]->GetCreatorProcess()->GetProcessName());
+    // Name of daughter particle
+    analysisManager->FillNtupleSColumn(1, (*secondaries)[lp]->GetDefinition()->GetParticleName());
+    // Name of mother particle
+    analysisManager->FillNtupleSColumn(2, step->GetTrack()->GetParticleDefinition()->GetParticleName());
+    // Name of volume where particle produced
+    analysisManager->FillNtupleSColumn(3, step->GetPreStepPoint()->GetTouchableHandle()->GetVolume()->GetLogicalVolume()->GetName());
+    // Energy of daughter particle
+    analysisManager->FillNtupleDColumn(4, (G4double)(*secondaries)[lp]->GetKineticEnergy()/CLHEP::MeV);
+    // Position of particle production
+    analysisManager->FillNtupleDColumn(5, (G4double)(*secondaries)[lp]->GetPosition().getX()/CLHEP::cm);
+    analysisManager->FillNtupleDColumn(6, (G4double)(*secondaries)[lp]->GetPosition().getY()/CLHEP::cm);
+    analysisManager->FillNtupleDColumn(7, (G4double)(*secondaries)[lp]->GetPosition().getZ()/CLHEP::cm);
+    // Time of particle production
+    analysisManager->FillNtupleDColumn(8, (G4double)(*secondaries)[lp]->GetGlobalTime()/CLHEP::ns);
+    analysisManager->FillNtupleDColumn(9, (G4double)(*secondaries)[lp]->GetLocalTime()/CLHEP::ns);
+    // Momentum of daughter particle
+    analysisManager->FillNtupleDColumn(10, (G4double)(*secondaries)[lp]->GetMomentum().getX()/CLHEP::MeV);
+    analysisManager->FillNtupleDColumn(11, (G4double)(*secondaries)[lp]->GetMomentum().getY()/CLHEP::MeV);
+    analysisManager->FillNtupleDColumn(12, (G4double)(*secondaries)[lp]->GetMomentum().getZ()/CLHEP::MeV);
+    // Momentum direction vectors
+    analysisManager->FillNtupleDColumn(13, (G4double)(*secondaries)[lp]->GetMomentumDirection().getX());
+    analysisManager->FillNtupleDColumn(14, (G4double)(*secondaries)[lp]->GetMomentumDirection().getY());
+    analysisManager->FillNtupleDColumn(15, (G4double)(*secondaries)[lp]->GetMomentumDirection().getZ());
 
-  // kineticEnergy
-  analysisManager->FillNtupleDColumn(0, KE);
-  // total energy
-  analysisManager->FillNtupleDColumn(1, TE);
-  // vertex coordinates
-  analysisManager->FillNtupleDColumn(2, vx);
-  analysisManager->FillNtupleDColumn(3, vy);
-  analysisManager->FillNtupleDColumn(4, vz);
-  analysisManager->FillNtupleDColumn(5, theta);
-  // momentum
-  analysisManager->FillNtupleDColumn(6, px);
-  analysisManager->FillNtupleDColumn(7, py);
-  analysisManager->FillNtupleDColumn(8, pz);
-  // time info
-  analysisManager->FillNtupleDColumn(9, gt);
-  analysisManager->FillNtupleDColumn(10, lt);
-  analysisManager->AddNtupleRow();
+    analysisManager->AddNtupleRow();
+  }
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
